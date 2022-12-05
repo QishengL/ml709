@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
 
 
 import torch
@@ -38,14 +37,14 @@ from torch.optim import AdamW
 from transformers import get_scheduler
 import sys
 
-# In[9]:
+
 
 
 from transformers import AutoTokenizer, AutoModel
 from sklearn.metrics import accuracy_score, f1_score, recall_score, precision_score
 
 
-# In[24]:
+
 
 
 from torch.nn import CrossEntropyLoss
@@ -54,7 +53,7 @@ from torch.nn import CrossEntropyLoss
 
 
 
-
+#contrastive loss
 class SupConLoss(nn.Module):
     """Supervised Contrastive Learning: https://arxiv.org/pdf/2004.11362.pdf.
     It also supports the unsupervised contrastive loss in SimCLR"""
@@ -145,7 +144,7 @@ class SupConLoss(nn.Module):
 
 
 
-
+#abstract server class
 class CenterServer:
     def __init__(self, model, dataloader, device="cpu"):
         self.model = model
@@ -161,7 +160,7 @@ class CenterServer:
     def validation(self):
         raise NotImplementedError
 
-
+#server class
 class FedAvgCenterServer(CenterServer):
     def __init__(self, model, dataloader, device="cpu"):
         super().__init__(model, dataloader, device)
@@ -217,9 +216,9 @@ class FedAvgCenterServer(CenterServer):
         return test_loss, accuracy,f1
 
 
-# In[33]:
 
 
+#abstract client
 class Client:
     def __init__(self, client_id, dataloader, device='cpu'):
         self.client_id = client_id
@@ -241,7 +240,7 @@ class Client:
     def __len__(self):
         return len(self.dataloader.dataset)
 
-
+#client
 class FedAvgClient(Client):
     def client_update(self,  local_epoch, loss_fn,loss_fn2):
         self.model.train()
@@ -277,7 +276,7 @@ class FedAvgClient(Client):
 
 
 
-
+#logging
 logging.basicConfig(level = logging.INFO)
 
 log = logging.getLogger(__name__)
@@ -285,7 +284,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 
-# In[7]:
+#data
 
 
 data=pd.read_csv('/home/qisheng.liao/ml709/nadi2021/full/nadi2021_train_full.csv')
@@ -298,7 +297,7 @@ tokenizer = AutoTokenizer.from_pretrained("UBC-NLP/MARBERT")
 gold=test['#3_country_label'].to_list()
 country_dict=pd.Series(data['#3_country_label'].values,index=data.country_code).to_dict()
 
-
+# model
 class MyModel(nn.Module):
     def __init__(self,feat_dim, num_classes):
         super(MyModel, self).__init__()
@@ -330,9 +329,8 @@ class MyModel(nn.Module):
         return feat,classes
 
 model = MyModel(128,21)
-# In[13]:
 
-
+#dataloader
 def pad_TextSequence(batch):
       return torch.nn.utils.rnn.pad_sequence(batch,batch_first=True, padding_value=0)
 
@@ -360,7 +358,6 @@ def encode(batch):
     return dic 
 
 
-# In[65]:
 
 
 dataset = Dataset.from_pandas(data)
@@ -370,9 +367,8 @@ dataloader = DataLoader(dataset, batch_size=16,collate_fn=collate_fn,shuffle=Tru
 
 
 
-# In[16]:
 
-
+#abtract main class
 class FedBase:
     def create_datasets(self,
                               num_clients=10,
@@ -403,9 +399,9 @@ class FedBase:
         raise NotImplementedError
 
 
-# In[86]:
 
 
+#main class for fed 
 class FedAvg(FedBase):
     def __init__(self,
                  model,
@@ -499,7 +495,7 @@ A=FedAvg(model,num_clients=5,
                  local_epoch=5,device=device)
 
 
-
+#train
 A.fit(500)
 
 
